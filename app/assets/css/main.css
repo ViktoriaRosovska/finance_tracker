@@ -1,0 +1,33 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* @theme static {
+  --color-brand-500: #26c511;
+  --color-brand-600: #46c62c; primary 
+  --color-brand-700: #1ea512;  hover 
+  --color-brand-800: #36e617; active 
+} */
+
+body {
+  font-family: "Inter";
+  @apply bg-white dark:bg-gray-900;
+}
+
+/* input[type="date"]::-webkit-datetime-edit {
+  color: #000;
+  opacity: 1;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+  color: #000;
+  opacity: 1;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  color: #000;
+  opacity: 1;
+} */

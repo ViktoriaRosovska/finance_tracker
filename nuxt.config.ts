@@ -1,0 +1,20 @@
+// https://nuxt.com/docs/api/configuration/nuxt-config
+export default defineNuxtConfig({
+  compatibilityDate: "2025-07-15",
+  devtools: { enabled: true },
+  modules: ["@nuxt/ui", "@nuxtjs/supabase"],
+  css: ["~/assets/css/main.css"],
+  colorMode: {
+    preference: "light",
+    fallback: "light",
+  },
+  icon: {
+    clientBundle: {
+      scan: true,
+      sizeLimitKb: 256,
+    },
+  },
+  supabase: {
+    redirect: false,
+  },
+});
