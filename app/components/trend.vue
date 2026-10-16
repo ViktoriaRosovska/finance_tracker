@@ -1,6 +1,9 @@
 <template>
   <div>
-    <div class="font-bold" :class="{ green: trendingUp, red: !trendingUp }">
+    <div
+      class="font-bold"
+      :class="{ green: title === 'Income', red: title === 'Expense' }"
+    >
       {{ title }}
     </div>
     <div class="text-2xl font-extrabold text-black dark:text-white mb-2">
@@ -13,7 +16,7 @@
         <UIcon
           :name="icon"
           class="w-6 h-6"
-          :class="{ green: trendingUp, red: !trendingUp }"
+          :class="{ green: title === 'Income', red: title === 'Expense' }"
         />
         <div class="text-gray-500 dark:text-gray-400">
           {{ percentageTrend }} vs last period
@@ -29,6 +32,9 @@ const props = defineProps<{
   lastAmount: number;
   loading: boolean;
 }>();
+const { amount } = toRefs(props);
+const { currency } = useCurrency(amount);
+
 const trendingUp = computed(() => {
   return props.amount >= props.lastAmount;
 });
@@ -38,15 +44,18 @@ const icon = computed(() => {
     : "i-heroicons-arrow-trending-down";
 });
 const percentageTrend = computed(() => {
-  if (props.amount === 0 || props.lastAmount === 0) {
-    return "∞%";
+  if (props.lastAmount === 0) {
+    if (props.amount === 0) {
+      return "0%";
+    }
+
+    return "New";
   }
-  const bigger = Math.max(props.amount, props.lastAmount);
-  const lower = Math.min(props.amount, props.lastAmount);
-  const ratio = ((bigger - lower) / lower) * 100;
+
+  const ratio = ((props.amount - props.lastAmount) / props.lastAmount) * 100;
+
   return `${Math.ceil(ratio)}%`;
 });
-const { currency } = useCurrency(toRef(props, "amount"));
 </script>
 <style scoped>
 @reference "~/assets/css/main.css";

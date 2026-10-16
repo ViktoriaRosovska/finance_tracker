@@ -1,0 +1,5 @@
+REVOKE MAINTAIN, REFERENCES, TRIGGER, TRUNCATE
+ON TABLE public.categories FROM authenticated;
+
+REVOKE MAINTAIN, REFERENCES, TRIGGER, TRUNCATE
+ON TABLE public.transactions FROM authenticated;

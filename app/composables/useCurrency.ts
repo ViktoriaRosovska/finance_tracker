@@ -3,7 +3,7 @@ export const useCurrency = (amount: MaybeRef<number>) => {
     return Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "USD",
-    }).format(unref(amount));
+    }).format(isRef(amount)? amount.value : amount);
   });
   return { currency };
 };

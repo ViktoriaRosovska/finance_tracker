@@ -10,5 +10,8 @@ export default defineAppConfig({
       // neutral: "zinc",
       primary: "green",
     },
+    icons: {
+      upload: "avatar-upload",
+    },
   },
 });

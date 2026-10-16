@@ -1,6 +1,6 @@
 <template>
   <section class="flex items-center justify-between mb-10">
-    <h1 class="text-4xl font-extrabold">Sumary</h1>
+    <h1 class="text-4xl font-extrabold">Summary</h1>
     <div>
       <USelectMenu
         :items="transactionViewOptions"
@@ -15,26 +15,14 @@
   >
     <Trend
       title="Income"
-      :amount="incomeTotal"
-      :last-amount="3000"
+      :amount="totalIncomeCurrent"
+      :last-amount="totalIncomePrevious"
       :loading="pending"
     />
     <Trend
-      title="Expence"
-      :amount="expenseTotal"
-      :last-amount="6000"
-      :loading="pending"
-    />
-    <Trend
-      title="Investments"
-      :amount="4000"
-      :last-amount="3000"
-      :loading="pending"
-    />
-    <Trend
-      title="Saving"
-      :amount="4000"
-      :last-amount="5000"
+      title="Expense"
+      :amount="totalExpenseCurrent"
+      :last-amount="totalExpensePrevious"
       :loading="pending"
     />
   </section>
@@ -47,13 +35,25 @@
       </div>
     </div>
     <div>
-      <TransactionModal />
+        <UButton
+      icon="i-heroicons-plus-circle"
+      color="primary"
+      variant="solid"
+      label="Add"
+      @click="openForCreate"
+    />
+      <TransactionModal @saved-transaction="refresh" :transaction="currentTransaction" v-model:open="isTransactionModalOpen"/>
     </div>
   </section>
-  <section v-if="!pending">
-    <ul>
+  <section>
+    <div v-if="!transactions.length && pending">
+      <USkeleton v-for="i in 4" :key="i" class="h-8 w-full mb-2" />
+    </div>
+    <p v-else-if="transactions.length === 0">No transactions yet...</p>
+
+    <ul v-else>
       <li
-        v-for="(transactionOnDay, date) in transactionsGroupedByDate"
+        v-for="(transactionOnDay, date) in transactionsGrouped"
         :key="date"
         class="mb-10"
       >
@@ -62,11 +62,13 @@
             :date="date"
             :transactions="transactionOnDay"
           />
+
           <ul>
             <li v-for="transaction in transactionOnDay" :key="transaction.id">
               <Transaction
                 :transaction="transaction"
-                @deleted="refreshTransactions"
+                @deleted="refresh"
+                @edited="openForEdit"
               />
             </li>
           </ul>
@@ -74,51 +76,59 @@
       </li>
     </ul>
   </section>
-  <section v-else>
-    <USkeleton class="h-8 w-full mb-2" v-for="i in 4" :key="i" />
-  </section>
 </template>
 <script setup lang="ts">
+import { useSelectedTimePeriod } from "~/composables/useSelectedTimePeriod";
 import { transactionViewOptions } from "~/constants";
-import type { Transaction } from "~/types";
+import type { GetTransaction, TransactionView } from "~/types";
+const { user } = useAuth();
+const selectedView = ref<TransactionView>(
+  user.value?.user_metadata?.transaction_view ?? transactionViewOptions[0],
+);
 
-const supabase = useSupabaseClient();
+const { current, previous } = useSelectedTimePeriod(selectedView);
 
-const fetchTransactions = async () => {
-  const { data, error } = await supabase.from("transactions").select(`
-    id,
-    amount,
-    type,
-    description,
-    transaction_date,
-    created_at,
-    category:categories (
-      name
-    )
-  `);
-  if (error) {
-    return [];
-  }
-  return data ?? [];
-};
+const { transactions, refresh, pending, getTransactionsByPeriod } =
+  useFetchTransactions();
+await refresh();
 
-const {
-  data: transactions,
-  pending,
-  //refresh,
-  //error,
-} = await useAsyncData<Transaction[]>("transactions", fetchTransactions, {
-  default: () => [],
-});
+let transactionsByPeriod: Ref<GetTransaction[]> = ref([]);
+const totalIncomePrevious = ref(0);
+const totalExpensePrevious = ref(0);
+const totalIncomeCurrent = ref(0);
+const totalExpenseCurrent = ref(0);
+const previousPending = ref(false);
 
-const refreshTransactions = async () => {
-  transactions.value = await fetchTransactions();
-};
+watch(
+  selectedView,
+  async () => {
+    previousPending.value = true;
 
-await refreshTransactions();
+    try {
+      const result = ref(await getTransactionsByPeriod(previous.value));
+      const currentPeriod = ref(await getTransactionsByPeriod(current.value));
+      const stats = useTransactionStats(result);
+
+      const currentStats = useTransactionStats(currentPeriod);
+
+      totalIncomePrevious.value = stats.incomeTotal.value;
+      totalExpensePrevious.value = stats.expenseTotal.value;
+
+      totalIncomeCurrent.value = currentStats.incomeTotal.value;
+      totalExpenseCurrent.value = currentStats.expenseTotal.value;
+
+      transactionsByPeriod.value = result.value;
+    } finally {
+      previousPending.value = false;
+    }
+  },
+  { immediate: true },
+);
+
+const { incomeCount, expenseCount } = useTransactionStats(transactions);
 
 const transactionsGroupedByDate = computed(() => {
-  let grouped: Record<string, Transaction[]> = {};
+  let grouped: Record<string, GetTransaction[]> = {};
   for (const transaction of transactions.value) {
     const date = transaction.transaction_date.slice(0, 10);
     if (!grouped[date]) {
@@ -126,36 +136,62 @@ const transactionsGroupedByDate = computed(() => {
     }
     grouped[date].push(transaction);
   }
+
   return grouped;
 });
 
-//console.log(transactionsGroupedByDate.value);
+const transactionsGroupedByMonth = computed(() => {
+  let grouped: Record<string, GetTransaction[]> = {};
+  for (const transaction of transactions.value) {
+    const month = new Date(transaction.transaction_date).toLocaleString("en", {
+      month: "long",
+      year: "numeric",
+    });
+    if (!grouped[month]) {
+      grouped[month] = [];
+    }
+    grouped[month].push(transaction);
+  }
 
-// const totals = computed(() => {
-//   return transactions.value.reduce(
-//     (result, transaction) => {
-//       result[transaction.type] =
-//         (result[transaction.type] ?? 0) + transaction.amount;
-//       return result;
-//     },
-//     {} as Record<string, number>,
-//   );
-// });
+  return grouped;
+});
 
-const income = computed(() =>
-  transactions.value.filter((t) => t.type === "income"),
-);
-const expense = computed(() =>
-  transactions.value.filter((t) => t.type === "expense"),
-);
-const incomeCount = computed(() => income.value.length);
-const expenseCount = computed(() => expense.value.length);
+const transactionsGroupedByYear = computed(() => {
+  let grouped: Record<string, GetTransaction[]> = {};
+  for (const transaction of transactions.value) {
+    const year = transaction.transaction_date.slice(0, 4);
+    if (!grouped[year]) {
+      grouped[year] = [];
+    }
+    grouped[year].push(transaction);
+  }
 
-const incomeTotal = computed(() =>
-  income.value.reduce((sum, transaction) => sum + transaction.amount, 0),
-);
-const expenseTotal = computed(() =>
-  expense.value.reduce((sum, transaction) => sum + transaction.amount, 0),
-);
-const selectedView = ref<string>(transactionViewOptions[1] ?? "Monthly");
+  return grouped;
+});
+const transactionsGrouped = computed(() => {
+  switch (selectedView.value) {
+    case "Yearly":
+      return transactionsGroupedByYear.value;
+
+    case "Monthly":
+      return transactionsGroupedByMonth.value;
+
+    default:
+      return transactionsGroupedByDate.value;
+  }
+});
+
+const currentTransaction = ref<GetTransaction | null>(null);
+
+const isTransactionModalOpen = ref(false);
+const openForCreate = () => {
+  currentTransaction.value = null;
+  isTransactionModalOpen.value = true;
+};
+
+const openForEdit = (transaction: GetTransaction) => {
+  currentTransaction.value = transaction;
+  isTransactionModalOpen.value = true;
+  console.log(currentTransaction.value)
+};
 </script>

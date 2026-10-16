@@ -9,10 +9,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import type { Transaction } from "~/types";
+import type { GetTransaction } from "~/types";
 
 const props = defineProps<{
-  transactions: Transaction[];
+  transactions: GetTransaction[];
   date: string;
 }>();
 

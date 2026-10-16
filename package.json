@@ -20,6 +20,8 @@
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/lucide": "^1.2.124",
+    "date-fns": "^4.4.0",
+    "supabase": "^2.116.0",
     "zod": "^4.5.4"
   }
 }
