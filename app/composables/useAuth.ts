@@ -10,7 +10,8 @@ export const useAuth = () => {
     const { data, error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: "http://localhost:3000/confirm",
+        emailRedirectTo:
+          "https://finance-tracker-indol-omega.vercel.app/confirm",
       },
     });
 
