@@ -35,14 +35,18 @@
       </div>
     </div>
     <div>
-        <UButton
-      icon="i-heroicons-plus-circle"
-      color="primary"
-      variant="solid"
-      label="Add"
-      @click="openForCreate"
-    />
-      <TransactionModal @saved-transaction="refresh" :transaction="currentTransaction" v-model:open="isTransactionModalOpen"/>
+      <UButton
+        icon="i-heroicons-plus-circle"
+        color="primary"
+        variant="solid"
+        label="Add"
+        @click="openForCreate"
+      />
+      <TransactionModal
+        @saved-transaction="refresh"
+        :transaction="currentTransaction"
+        v-model:open="isTransactionModalOpen"
+      />
     </div>
   </section>
   <section>
@@ -192,6 +196,10 @@ const openForCreate = () => {
 const openForEdit = (transaction: GetTransaction) => {
   currentTransaction.value = transaction;
   isTransactionModalOpen.value = true;
-  console.log(currentTransaction.value)
+  console.log(currentTransaction.value);
 };
+
+const config = useRuntimeConfig();
+
+console.log(config.public.baseUrl);
 </script>

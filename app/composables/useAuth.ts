@@ -2,6 +2,7 @@ import type { UpdateUser } from "~/types";
 
 export const useAuth = () => {
   const supabase = useSupabaseClient();
+  const config = useRuntimeConfig();
 
   const user = useSupabaseUser();
   const { getPublicAvatarUrl } = useBucket();
@@ -10,8 +11,7 @@ export const useAuth = () => {
     const { data, error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo:
-          "https://finance-tracker-viktoriia-rosovska.vercel.app/confirm",
+        emailRedirectTo: `${config.public.baseUrl}/confirm`,
       },
     });
 
