@@ -11,7 +11,7 @@ export const useAuth = () => {
       email,
       options: {
         emailRedirectTo:
-          "https://finance-tracker-viktoriia-rosovskas-projects.vercel.app/",
+          "https://finance-tracker-viktoriia-rosovska.vercel.app/confirm",
       },
     });
 

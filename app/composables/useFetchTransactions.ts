@@ -1,6 +1,5 @@
 import type { GetTransaction, TransactionPeriod } from "~/types";
 import type { Database } from "~/database.types";
-import { toHandlers } from "vue";
 
 export const useFetchTransactions = () => {
   const supabase = useSupabaseClient<Database>();
